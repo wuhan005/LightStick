@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f1efe8">
+  <meta name="description" content="树莓派 433MHz 荧光棒 RGB 控制台">
+  <meta property="og:title" content="Encore Light Control">
+  <meta property="og:description" content="树莓派 433MHz 荧光棒控制台">
+  <title>Encore Light Control</title>
+  <link rel="stylesheet" href="/controller.css?v=2">
+  <script src="/controller.js?v=2" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#controller" aria-label="Encore Light Control 首页">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>ENCORE / LIGHT</span>
+      </a>
+      <div class="connection-pill" id="connectionPill" data-state="checking">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="connectionText">正在连接树莓派</span>
+      </div>
+    </header>
+
+    <section class="hero-copy">
+      <p class="eyebrow">433 MHz · GPIO 17</p>
+      <h1>把现场的颜色，<br>重新握在手里。</h1>
+      <p class="intro">从色盘挑选一个颜色，确认后发送到附近的 Encore 荧光棒。页面会持续刷新当前信号，直到你按下停止。</p>
+      <div class="signal-note">
+        <span class="signal-glyph" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div>
+          <strong>本地直接控制</strong>
+          <span>信号仅在你的局域网与 433MHz 模块之间流动</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="controller" id="controller" aria-label="荧光棒颜色控制器">
+      <div class="controller-head">
+        <div>
+          <p class="card-kicker">COLOR TRANSMITTER</p>
+          <h2>选择灯光颜色</h2>
+        </div>
+        <div class="live-badge" id="liveBadge" data-active="false">
+          <span aria-hidden="true"></span>
+          <b id="liveText">待机</b>
+        </div>
+      </div>
+
+      <div class="picker-layout">
+        <div class="wheel-wrap" id="wheelWrap">
+          <canvas id="colorWheel" width="600" height="600" role="slider" tabindex="0" aria-label="色相与饱和度色盘" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-valuetext="绿色，饱和度 100%"></canvas>
+          <span class="wheel-thumb" id="wheelThumb" aria-hidden="true"></span>
+          <div class="preview-orb" id="previewOrb" aria-hidden="true"><span></span></div>
+        </div>
+
+        <div class="picker-side">
+          <label class="slider-label" for="brightness">
+            <span>亮度</span>
+            <output id="brightnessValue">100%</output>
+          </label>
+          <input class="brightness-slider" id="brightness" type="range" min="0" max="100" value="100" aria-label="颜色亮度">
+
+          <div class="hex-panel">
+            <span>HEX</span>
+            <label>
+              <span class="sr-only">十六进制颜色</span>
+              <input id="hexInput" type="text" value="#00FF00" maxlength="7" spellcheck="false">
+            </label>
+          </div>
+
+          <div class="rgb-inputs" aria-label="RGB 数值输入">
+            <label><span>R</span><input id="rInput" type="number" inputmode="numeric" min="0" max="255" value="0" aria-label="R 通道"></label>
+            <label><span>G</span><input id="gInput" type="number" inputmode="numeric" min="0" max="255" value="255" aria-label="G 通道"></label>
+            <label><span>B</span><input id="bInput" type="number" inputmode="numeric" min="0" max="255" value="0" aria-label="B 通道"></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="preset-section">
+        <p class="section-label">快速颜色</p>
+        <div class="presets" role="list" aria-label="常用颜色">
+          <button class="preset" type="button" data-color="#ff0000" aria-label="正红" title="正红"><span class="preset-swatch preset-ff0000" aria-hidden="true"></span></button>
+          <button class="preset" type="button" data-color="#00ff00" aria-label="荧光绿" title="荧光绿"><span class="preset-swatch preset-00ff00" aria-hidden="true"></span></button>
+          <button class="preset" type="button" data-color="#0066ff" aria-label="电光蓝" title="电光蓝"><span class="preset-swatch preset-0066ff" aria-hidden="true"></span></button>
+          <button class="preset" type="button" data-color="#ff7a00" aria-label="暖橙" title="暖橙"><span class="preset-swatch preset-ff7a00" aria-hidden="true"></span></button>
+          <button class="preset" type="button" data-color="#ff00c8" aria-label="品红" title="品红"><span class="preset-swatch preset-ff00c8" aria-hidden="true"></span></button>
+          <button class="preset" type="button" data-color="#00e5ff" aria-label="青蓝" title="青蓝"><span class="preset-swatch preset-00e5ff" aria-hidden="true"></span></button>
+          <button class="preset" type="button" data-color="#ffffff" aria-label="纯白" title="纯白"><span class="preset-swatch preset-ffffff" aria-hidden="true"></span></button>
+          <button class="preset preset-off" type="button" data-color="#000000" aria-label="关闭荧光棒" title="关闭荧光棒"><span class="preset-swatch preset-000000" aria-hidden="true"></span></button>
+        </div>
+      </div>
+
+      <div class="quantize-panel">
+        <div>
+          <span class="section-label">荧光棒实际输出</span>
+          <strong id="quantizedHex">#00FF00</strong>
+        </div>
+        <div class="level-bars" id="levelBars" aria-label="RGB 四档量化结果">
+          <div class="level-row" data-channel="r"><span>R</span><i></i><i></i><i></i><b>0/3</b></div>
+          <div class="level-row" data-channel="g"><span>G</span><i></i><i></i><i></i><b>0/3</b></div>
+          <div class="level-row" data-channel="b"><span>B</span><i></i><i></i><i></i><b>0/3</b></div>
+        </div>
+        <p>协议每个颜色通道只有 4 档，发送前会自动量化。</p>
+      </div>
+
+      <div class="action-row">
+        <button class="send-button" id="sendButton" type="button">
+          <span class="button-icon" aria-hidden="true">↗</span>
+          <span class="button-copy"><b>发送这个颜色</b><small>持续刷新 RF 信号</small></span>
+          <span class="button-arrow" aria-hidden="true">→</span>
+        </button>
+        <button class="stop-button" id="stopButton" type="button" disabled>
+          <span class="stop-square" aria-hidden="true"></span>
+          停止发射
+        </button>
+      </div>
+
+      <div class="message-bar" id="messageBar" role="status" aria-live="polite">
+        <span aria-hidden="true">●</span>
+        <p id="messageText">选择颜色后点击发送。停止发射不会发送黑色包。</p>
+      </div>
+    </section>
+
+    <footer>
+      <span>SOUL POWER II · 7 ZONES</span>
+      <span>2000 BPS MANCHESTER</span>
+      <span>LOCAL RF CONTROL</span>
+    </footer>
+  </main>
+</body>
+</html>
